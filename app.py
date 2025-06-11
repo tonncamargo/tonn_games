@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, inspect
 from flask_migrate import Migrate
 import os
 from dotenv import load_dotenv
@@ -26,14 +26,7 @@ app.secret_key = os.environ.get('SECRET_KEY') or 'fallback-key-segura'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# Adicione esta função para inicializar o banco de dados
-def init_db():
-    with app.app_context():
-        # Isso criará as tabelas se não existirem (apenas para desenvolvimento)
-        # Em produção, você deve usar migrações (Flask-Migrate)
-        db.create_all()
-
-# MODELOS (mantidos iguais)
+# MODELOS
 class Jogador(db.Model):
     __tablename__ = 'jogador'
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +58,29 @@ class Rodada(db.Model):
     jogo_id = db.Column(db.Integer, db.ForeignKey('jogo.id'), nullable=False)
     numero = db.Column(db.Integer, nullable=False)
     pontos = db.Column(db.JSON, nullable=False)
+
+def check_and_create_tables():
+    """Verifica e cria tabelas se necessário, com tratamento de erros robusto"""
+    with app.app_context():
+        try:
+            # Primeiro tenta usar o Flask-Migrate
+            from flask_migrate import upgrade
+            upgrade()
+            print("Migrações aplicadas com sucesso via Flask-Migrate")
+        except Exception as e:
+            print(f"Erro ao aplicar migrações: {e}. Tentando criar tabelas diretamente...")
+            try:
+                inspector = inspect(db.engine)
+                required_tables = {'jogador', 'jogo', 'rodada'}
+                existing_tables = set(inspector.get_table_names())
+                
+                if not required_tables.issubset(existing_tables):
+                    print("Tabelas ausentes detectadas. Criando tabelas...")
+                    db.create_all()
+                    print("Tabelas criadas com sucesso!")
+            except Exception as e:
+                print(f"Erro crítico ao criar tabelas: {e}")
+                raise RuntimeError("Não foi possível inicializar o banco de dados") from e
 
 # ROTAS (mantidas iguais)
 @app.route('/')
@@ -274,8 +290,8 @@ def ver_jogo(id):
                          totais=totais)
 
 if __name__ == '__main__':
-    # Inicializa o banco de dados
-    init_db()
+    # Verifica e cria tabelas antes de iniciar o app
+    check_and_create_tables()
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
