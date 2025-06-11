@@ -8,17 +8,25 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Carrega variáveis do arquivo .env
 
-
 app = Flask(__name__)
+
+# Configuração do PostgreSQL para o Render
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', '').replace(
     'postgres://', 'postgresql://', 1
 )
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {
+        'sslmode': 'require'  # Conexão segura obrigatória no Render
+    }
+}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PROPAGATE_EXCEPTIONS'] = True
 app.secret_key = os.environ.get('SECRET_KEY') or 'fallback-key-segura'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+
 # MODELOS
 class Jogador(db.Model):
     __tablename__ = 'jogador'
@@ -268,5 +276,9 @@ def ver_jogo(id):
                          totais=totais)
 
 if __name__ == '__main__':
+    with app.app_context():
+        # Cria as tabelas se não existirem (apenas para desenvolvimento)
+        db.create_all()
+    
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
