@@ -26,8 +26,14 @@ app.secret_key = os.environ.get('SECRET_KEY') or 'fallback-key-segura'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+# Adicione esta função para inicializar o banco de dados
+def init_db():
+    with app.app_context():
+        # Isso criará as tabelas se não existirem (apenas para desenvolvimento)
+        # Em produção, você deve usar migrações (Flask-Migrate)
+        db.create_all()
 
-# MODELOS
+# MODELOS (mantidos iguais)
 class Jogador(db.Model):
     __tablename__ = 'jogador'
     id = db.Column(db.Integer, primary_key=True)
@@ -46,7 +52,7 @@ class Jogo(db.Model):
     jogador_inicial_id = db.Column(db.Integer, db.ForeignKey('jogador.id'), nullable=False)
     perdedor_id = db.Column(db.Integer, db.ForeignKey('jogador.id'), nullable=True)
     embaralhador_atual_id = db.Column(db.Integer, db.ForeignKey('jogador.id'), nullable=False)
-    jogadores_participantes = db.Column(db.JSON, nullable=False)  # Lista de IDs dos jogadores participantes
+    jogadores_participantes = db.Column(db.JSON, nullable=False)
 
     jogador_inicial = db.relationship('Jogador', foreign_keys=[jogador_inicial_id], backref='jogos_iniciados')
     perdedor = db.relationship('Jogador', foreign_keys=[perdedor_id], backref='jogos_perdidos')
@@ -60,7 +66,7 @@ class Rodada(db.Model):
     numero = db.Column(db.Integer, nullable=False)
     pontos = db.Column(db.JSON, nullable=False)
 
-# ROTAS
+# ROTAS (mantidas iguais)
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -174,7 +180,6 @@ def novo_jogo():
             flash('Selecione um jogador inicial válido.', 'warning')
             return redirect(url_for('novo_jogo'))
 
-        # Cria o jogo com o embaralhador inicial e lista de participantes
         novo_jogo = Jogo(
             jogador_inicial_id=int(embaralhador),
             embaralhador_atual_id=int(embaralhador),
@@ -200,13 +205,11 @@ def ver_jogo(id):
         flash('Este jogo já foi finalizado!', 'warning')
         return redirect(url_for('historico'))
     
-    # Obtém os jogadores participantes do jogo
     participantes_ids = jogo_atual.jogadores_participantes
     jogadores = Jogador.query.filter(Jogador.id.in_(participantes_ids)).order_by(Jogador.nome).all()
     
     rodadas = Rodada.query.filter_by(jogo_id=id).order_by(Rodada.numero).all()
 
-    # Calcula totais de pontos
     totais = {}
     for r in rodadas:
         for id_jogador, pontos in r.pontos.items():
@@ -228,7 +231,6 @@ def ver_jogo(id):
             flash('Nenhum ponto foi registrado!', 'warning')
             return redirect(url_for('ver_jogo', id=id))
 
-        # Cria a nova rodada
         nova_rodada = Rodada(
             jogo_id=id,
             numero=len(rodadas) + 1,
@@ -238,11 +240,9 @@ def ver_jogo(id):
         try:
             db.session.add(nova_rodada)
             
-            # Atualiza totais
             for id_jogador, valor in pontos.items():
                 totais[id_jogador] = totais.get(id_jogador, 0) + valor
 
-            # Verifica se o jogo terminou
             for id_jogador, total in totais.items():
                 if total >= 100:
                     jogo_atual.data_fim = datetime.utcnow()
@@ -251,14 +251,12 @@ def ver_jogo(id):
                     flash(f'{Jogador.query.get(id_jogador).nick} perdeu o jogo!', 'danger')
                     return redirect(url_for('index'))
             
-            # Rotaciona o embaralhador para a próxima rodada
             if participantes_ids:
                 try:
                     atual_index = participantes_ids.index(str(jogo_atual.embaralhador_atual_id))
                     proximo_index = (atual_index + 1) % len(participantes_ids)
                     jogo_atual.embaralhador_atual_id = int(participantes_ids[proximo_index])
                 except ValueError:
-                    # Caso o embaralhador atual não esteja na lista (não deveria acontecer)
                     jogo_atual.embaralhador_atual_id = int(participantes_ids[0])
             
             db.session.commit()
@@ -276,9 +274,8 @@ def ver_jogo(id):
                          totais=totais)
 
 if __name__ == '__main__':
-    with app.app_context():
-        # Cria as tabelas se não existirem (apenas para desenvolvimento)
-        db.create_all()
+    # Inicializa o banco de dados
+    init_db()
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
