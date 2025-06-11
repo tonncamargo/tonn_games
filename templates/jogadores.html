@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Jogadores{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+  <h2 class="text-center">Jogadores Cadastrados</h2>
+  {% if jogadores %}
+  <table class="table table-striped mt-4">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Apelido</th>
+        <th>Data de Cadastro</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for jogador in jogadores %}
+      <tr>
+        <td>{{ jogador.id }}</td>
+        <td>{{ jogador.nome }}</td>
+        <td>{{ jogador.nick }}</td>
+        <td>{{ jogador.data_cadastro.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td class="d-flex gap-2">
+        <a href="{{ url_for('editar_jogador', id=jogador.id) }}" class="btn btn-warning btn-sm">Editar</a>
+
+        <form action="{{ url_for('deletar_jogador', id=jogador.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir {{ jogador.nick }}?');">
+            <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+        </form>
+        </td>
+        
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="text-muted">Nenhum jogador cadastrado ainda.</p>
+  {% endif %}
+</div>
+{% endblock %}

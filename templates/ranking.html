@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Ranking de Jogadores{% endblock %}
+
+{% block content %}
+<h2>Ranking de Jogadores (menos derrotas)</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nick</th>
+            <th>Derrotas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in ranking %}
+        <tr>
+            <td>{{ r.nick }}</td>
+            <td>{{ r.derrotas }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

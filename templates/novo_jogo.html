@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Jogo{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+    <h2 class="text-center">Iniciar Novo Jogo</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Selecione os jogadores:</label>
+            {% for j in jogadores %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="jogadores" value="{{ j.id  }}" id="j{{ j.id }}">
+                <label class="form-check-label" for="j{{ j.id  }}">
+                    {{ j.nome }} ({{ j.nick }})
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+                <div class="mb-3">
+            <label for="jogador_inicial" class="form-label">Quem embaralha?</label>
+            <select class="form-select" id="jogador_inicial" name="jogador_inicial" required>
+                <option value="" selected disabled>Selecione</option>
+                {% for j in jogadores %}
+                <option value="{{ j.id }}">{{ j.nome }} ({{ j.nick }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Iniciar Jogo</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Jogo #{{ jogo.id }}{% endblock %}
+
+{% block content %}
+<h2>Jogo #{{ jogo.id }} - Em andamento</h2>
+<p>Iniciado em: {{ jogo.data_inicio.strftime('%d/%m/%Y %H:%M') }}</p>
+<p>Embaralhador atual: {{ jogo.embaralhador_atual.nick }}</p>
+
+<hr>
+
+<h4>Rodadas</h4>
+{% if rodadas %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Rodada</th>
+            {% for j in jogadores %}
+            <th>{{ j.nick }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for rodada in rodadas %}
+        <tr>
+            <td>{{ rodada.numero }}</td>
+            {% for j in jogadores %}
+            <td>{{ rodada.pontos.get(j.id|string, 0) }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr class="table-info fw-bold">
+            <td>Total</td>
+            {% for j in jogadores %}
+            <td>{{ totais.get(j.id, 0) }}</td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">Nenhuma rodada registrada ainda.</p>
+{% endif %}
+
+<hr>
+
+<h4>Nova Rodada</h4>
+<form method="POST">
+    {% for j in jogadores %}
+    <div class="mb-2">
+        <label for="pontos_{{ j.id }}">{{ j.nick }}</label>
+        <input type="number" class="form-control" name="pontos_{{ j.id }}" required min="0" value="0">
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Registrar Rodada</button>
+</form>
+{% endblock %}

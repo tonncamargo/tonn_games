@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Jogadores{% endblock %}
+
+{% block content %}
+
+    <h2>Editar Jogador</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome</label>
+            <input type="text" class="form-control" id="nome" name="nome" value="{{ jogador.nome  }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="nick" class="form-label">Nick</label>
+            <input type="text" class="form-control" id="nick" name="nick" value="{{ jogador.nick  }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        <a href="{{ url_for('listar_jogadores') }}" class="btn btn-secondary">Cancelar</a>     
+    </form>
+
+{% endblock %}

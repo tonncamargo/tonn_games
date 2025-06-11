@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Jogos{% endblock %}
+
+{% block content %}
+<h2>Histórico de Jogos</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>Perdedor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for jogo in jogos %}
+        <tr>
+            <td>{{ jogo.id }}</td>
+            <td>{{ jogo.data_inicio.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ jogo.data_fim.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ jogo.perdedor.nick }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
